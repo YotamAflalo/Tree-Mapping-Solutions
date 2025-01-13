@@ -8,6 +8,7 @@ MODEL_PATH = PROJECT_ROOT / "models" / "v1"/ "tree_model_new"
 
 SPLIT_FOLDER = PROJECT_ROOT / "data" / "processed_images" / "splited_images"
 OUTPUT_FOLDER = PROJECT_ROOT / "data"  / "output"
+OUTPUT_FOLDER_S3 =  "output"
 
 simplification_tolerance = 1.0
 min_polygon_points = 3

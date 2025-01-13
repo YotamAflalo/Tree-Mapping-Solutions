@@ -1,43 +1,41 @@
-DIBUG=True
-
 import numpy as np
-from PIL import Image
-from pathlib import Path
 import detectree as dtr
 import os
 import pickle
 from skimage.measure import find_contours
-import tqdm
 import geopandas as gpd
 from shapely.ops import unary_union
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from shapely.geometry import JOIN_STYLE
-import sys
-from datetime import datetime
-from affine import Affine
-import json
-project_root = str(Path(__file__).parent.parent)
-sys.path.insert(0, project_root)
+from config_model import MODEL_PATH,OUTPUT_FOLDER, simplification_tolerance,min_polygon_points,min_contour_points,join_mitre_leange,contours_level,min_area
+from tempfile import NamedTemporaryFile
 
-from logger import logger  # Note: changed this to be explicit
-from config.config_pre_process import SPLIT_FOLDER,OFSETS_FOLDER
-# Add the 'src' directory to the Python path
-from config.config_model import MODEL_PATH,OUTPUT_FOLDER, simplification_tolerance,min_polygon_points,min_contour_points,join_mitre_leange,contours_level,min_area
+# TODO - צריך דרך לעדכן את הקונפיג מבחוץ בקלות, אולי להוסיף שלב של משיכה של קובץ קונפיג מאס3
 
-# TODO - fix with s3 or gatawy content
-def load_offsets(date,DIBUG = False) ->dict:
-    '''
-    ths function load the offsets'''
-    if DIBUG:
-        path = os.path.join(OFSETS_FOLDER, '2025-01-11.json')
-        with open(path, 'r') as f:
-            offsets = json.load(f) 
+def load_image(s3_client,BUCKET_NAME,image_path):
 
-    return offsets
+    with NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+            temp_image_path = temp_file.name
+            
+            # Download the file from S3 to the temporary file
+            s3_client.download_file(
+                Bucket=BUCKET_NAME,
+                Key=image_path,
+                Filename=temp_image_path
+            )
+    return temp_image_path
+
+def delete_temp_image(temp_image_path):
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+            return True
+        else: return False
+
+
 
 def create_polygons(mask, simplification_tolerance = 1.0,min_polygon_points = 3,
                     min_contour_points = 3,join_mitre_leange = 1,contours_level = 0.5,min_area = 20.0):
-    logger.info('Create polygons in processing...')
+    # logger.info('Create polygons in processing...')
 
 
     contours = find_contours(mask, level=contours_level)
@@ -68,19 +66,25 @@ def create_polygons(mask, simplification_tolerance = 1.0,min_polygon_points = 3,
         if not polygon.is_empty and polygon.is_valid:
             final_polygons.append(polygon)
 
-    logger.info('Create polygons has done.')
+    # logger.info('Create polygons has done.')
     return final_polygons
     # final_polygons now contains all the combined and simplified polygons, ensuring none are missing
 
-def process_image(png_name, transform,OUTPUT_PNG_SPLIT, offsets,MODEL_PATH):
-    logger.info(f"Predicting model: {png_name}")
-    offset = offsets[png_name]
-
+def load_model(MODEL_PATH):
     clf = pickle.load(open(MODEL_PATH, 'rb'))
     clf_v1 = dtr.Classifier(clf=clf)
+    return clf_v1
 
+def process_image(png_name, transform,temp_image_path, offsets,model,
+                  simplification_tolerance=simplification_tolerance,
+                  min_polygon_points=min_polygon_points,min_contour_points=min_contour_points,
+                  join_mitre_leange=join_mitre_leange,contours_level=contours_level,min_area=min_area):
+    # logger.info(f"Predicting model: {png_name}")
+    offset = offsets[png_name]
+
+    
     # Predict models
-    y_pred = clf_v1.predict_img(f'{OUTPUT_PNG_SPLIT}/{png_name}')
+    y_pred = model.predict_img(temp_image_path)
 
     # Process results
     vegetation_mask = np.where(y_pred == 0, 0, 255)
@@ -104,24 +108,3 @@ def process_image(png_name, transform,OUTPUT_PNG_SPLIT, offsets,MODEL_PATH):
         adjusted_polygons.append(adjusted_polygon)
 
     return adjusted_polygons
-
-transform = Affine(1.0, 0.0, 0.0,
-       0.0, 1.0, 0.0)
-# crs = None
-polygons_info = []
-
-offsets = load_offsets(datetime.now().strftime("%Y-%m-%d"),DIBUG=DIBUG)
-
-IMAGE_NAME = list(offsets.keys())[0]#will come from the ofset dict
-offsets = offsets[IMAGE_NAME]
-
-for png_image in offsets.keys():# tqdm.tqdm(os.listdir(SPLIT_FOLDER)):
-    if '.png' in png_image:
-        polygons = process_image(png_image, OUTPUT_PNG_SPLIT=SPLIT_FOLDER, transform=transform, offsets=offsets,MODEL_PATH=MODEL_PATH)
-        polygons_info.extend(polygons)
-
-
-output_shp_path = f'{OUTPUT_FOLDER}/{IMAGE_NAME}_shapefile.shp'
-gdf = gpd.GeoDataFrame({'geometry': polygons_info})
-
-gdf.to_file(output_shp_path)

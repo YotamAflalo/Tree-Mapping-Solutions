@@ -39,6 +39,7 @@ data/ofsets/*
 data/output/*
 data/processed_images/*
 data/validation_input/*
+data/small_offsets/*
 
 # Logs
 src/logs/*

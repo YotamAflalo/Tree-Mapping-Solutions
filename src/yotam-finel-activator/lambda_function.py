@@ -25,16 +25,20 @@ def lambda_handler(event, context):
 
     response = s3.get_object(Bucket=bucket, Key=json_key)
     json_data = response['Body'].read()
-    ofsets_dict = json.loads(json_data)
+    offsets_dict = json.loads(json_data)
 
-    print(ofsets_dict)
+    print(offsets_dict)
     logger.info(f"Processing new file: {json_key} from bucket: {bucket}")
     #In the future, additional aggregation should be examined according to calculation power and lambda costs
-    for tif_file, png_dict in ofsets_dict.items():
-        print( tif_file)
-        #send a new lambada with this dict and tif name 
-
-
+    i=0
+    for tif_file, png_dict in offsets_dict.items():
+        temp_offsets = {}
+        temp_offsets[tif_file] = offsets_dict[tif_file] 
+        upload_byte_stream = bytes(json.dumps(temp_offsets).encode('UTF-8'))
+        file_name = f"small_offsets/{json_key[json_key.find('/')+1:json_key.find('.json')]}/offsets_{i}.json"
+        s3.put_object(Bucket=bucket,Key=file_name,Body = upload_byte_stream)
+        print(f'{tif_file} offsets uploaded')
+        i+=1
     
 
     return {
