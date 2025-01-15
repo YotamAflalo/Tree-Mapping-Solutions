@@ -7,7 +7,10 @@ import geopandas as gpd
 from shapely.ops import unary_union
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from shapely.geometry import JOIN_STYLE
-from config_model import MODEL_PATH,OUTPUT_FOLDER, simplification_tolerance,min_polygon_points,min_contour_points,join_mitre_leange,contours_level,min_area
+print("load packges to model_functions")
+from src.config_model import MODEL_PATH,OUTPUT_FOLDER, simplification_tolerance,min_polygon_points,min_contour_points,join_mitre_leange,contours_level,min_area
+print("load src.config_model to model_functions")
+
 from tempfile import NamedTemporaryFile
 
 # TODO - צריך דרך לעדכן את הקונפיג מבחוץ בקלות, אולי להוסיף שלב של משיכה של קובץ קונפיג מאס3

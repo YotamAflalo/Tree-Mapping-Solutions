@@ -4,8 +4,10 @@ import logging
 import os
 from affine import Affine
 
-from model_functions import process_image,load_model,load_image,delete_temp_image
-from config_model import MODEL_PATH,OUTPUT_FOLDER_S3
+from src.model_functions import process_image,load_model,load_image,delete_temp_image
+from src.config_model import MODEL_PATH,OUTPUT_FOLDER_S3
+print("load packges to lambada_functions")
+
 # Set up logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -13,13 +15,13 @@ aws_access_key_id = os.environ['aws_access_key_id']
 aws_secret_access_key = os.environ['aws_secret_access_key']
 import geopandas as gpd
 import tempfile
+print("finish to load packges to lambada_functions")
 
 
 #input - json with dicts for diffrent photos and sliced, output - triger diffrent lamdas and give them:
 # (1)an ofset file (2)rellevant information for finding the images in the bucket
 # i need to do same test on how mach can be done in one lambada, and aggragate base on this (/split more in the earlyer stages)
 def lambda_handler(event, context):
-    # TODO implement
 
 
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -34,6 +36,7 @@ def lambda_handler(event, context):
     offsets_dict = json.loads(json_data)
 
     print(offsets_dict)
+    print(f"Processing new file: {json_key} from bucket: {bucket}")
     logger.info(f"Processing new file: {json_key} from bucket: {bucket}")
 
 
@@ -49,10 +52,14 @@ def lambda_handler(event, context):
         offsets = png_dict
 
         for png_image in offsets.keys():
+            print(f"start procceding {png_image}")
             if '.png' in png_image: 
                 image_path = os.path.join(folder, png_image)
+                print(f"loading {png_image}")
                 temp_image= load_image(s3_client=s3,BUCKET_NAME=bucket,image_path=image_path) # i chackted this part in lambada and it is working :) 
+                print(f" {png_image} loaded")
                 polygons = process_image(png_image, temp_image_path=temp_image, transform=transform, offsets=offsets,model=model) #TODO chack on lambada
+                print(f"we activate the model on {png_image}")
                 polygons_info.extend(polygons)
                 delete_temp_image(temp_image)
 
@@ -66,7 +73,7 @@ def lambda_handler(event, context):
             
             # Save GeoDataFrame to temporary file
             gdf.to_file(temp_shp_path)
-            
+            print( "we finish gdf")
             # Upload all related files (.shp, .shx, .dbf, .prj)
             temp_files = []
             for file in os.listdir(tmpdir):
@@ -82,6 +89,7 @@ def lambda_handler(event, context):
                     # Upload file to S3
                     with open(os.path.join(tmpdir, file), 'rb') as f:
                         s3.upload_fileobj(f, bucket, s3_key)
+                        print(f"Uploaded {s3_key} to S3")
                         logger.info(f"Uploaded {s3_key} to S3")
                 # Explicitly delete temporary files
             for file_path in temp_files:
@@ -94,5 +102,5 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'body': json.dumps(f"{json_key} is processed")
+        'body': json.dumps(f"{json_key} is processed, have a nice day")
     }
