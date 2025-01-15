@@ -1,8 +1,8 @@
+DEBUG = True
 from pathlib import Path
 
 # Get project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
-
 # Define all paths relative to project root
 INPUT_FOLDER_PATH = PROJECT_ROOT / "data" / "input"
 # PNG_FOLDER = PROJECT_ROOT / "data" / "processed_images" / "png"
