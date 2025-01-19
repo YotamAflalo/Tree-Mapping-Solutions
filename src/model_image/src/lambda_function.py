@@ -23,7 +23,18 @@ print("finish to load packges to lambada_functions")
 # (1)an ofset file (2)rellevant information for finding the images in the bucket
 # i need to do same test on how mach can be done in one lambada, and aggragate base on this (/split more in the earlyer stages)
 def lambda_handler(event, context):
+    """
+    AWS Lambda handler that processes tree detection on images stored in S3.
+    Loads images based on offset data from a JSON file, runs detection model,
+    and saves results as shapefiles back to S3.
 
+    Args:
+        event: AWS Lambda event containing S3 trigger information
+        context: AWS Lambda context
+
+    Returns:
+        dict: Response with status code and processing confirmation message
+    """
 
     bucket = event['Records'][0]['s3']['bucket']['name']
     json_key = event['Records'][0]['s3']['object']['key']
@@ -68,7 +79,7 @@ def lambda_handler(event, context):
         gdf = gpd.GeoDataFrame({'geometry': polygons_info})
 
         output_shp_key = f'{OUTPUT_FOLDER_S3}/{json_key[json_key.find('/')+1:][:json_key[json_key.find('/')+1:].find('/')]}/{IMAGE_NAME}_shapefile.shp'
-                # Create a temporary directory
+            # Create a temporary directory
         with tempfile.TemporaryDirectory() as tmpdir:
             # Define temporary file path
             temp_shp_path = os.path.join(tmpdir, 'temp.shp')

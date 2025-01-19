@@ -31,6 +31,16 @@ except logs_client.exceptions.ResourceAlreadyExistsException:
 
 
 def log_to_cloudwatch(logs_client, message):
+    """
+    Sends a log message to AWS CloudWatch.
+
+    Args:
+        logs_client: Boto3 CloudWatch logs client
+        message: Log message to be recorded
+
+    Returns:
+        dict: CloudWatch API response
+    """
     timestamp = int(datetime.now().timestamp() * 1000) # Current time.
     log_event = {
     'logGroupName': log_group_name,

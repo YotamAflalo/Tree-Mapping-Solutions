@@ -23,12 +23,6 @@ try:
 except logs_client.exceptions.ResourceAlreadyExistsException:
     pass
 
-# response = logs_client.describe_log_streams(logGroupName=log_group_name, logStreamNamePrefix=log_stream_name)
-# upload_sequence_token = response['logStreams'][0].get('uploadSequenceToken', None)
-# if upload_sequence_token:
-#     log_event['sequenceToken'] = upload_sequence_token
-
-
 
 def log_to_cloudwatch(logs_client, message):
     timestamp = int(datetime.now().timestamp() * 1000) # Current time.

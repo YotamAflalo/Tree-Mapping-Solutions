@@ -7,16 +7,24 @@ import geopandas as gpd
 from shapely.ops import unary_union
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from shapely.geometry import JOIN_STYLE
-print("load packges to model_functions")
 from src.config_model import MODEL_PATH,OUTPUT_FOLDER, simplification_tolerance,min_polygon_points,min_contour_points,join_mitre_leange,contours_level,min_area
-print("load src.config_model to model_functions")
 
 from tempfile import NamedTemporaryFile
 
 # TODO - צריך דרך לעדכן את הקונפיג מבחוץ בקלות, אולי להוסיף שלב של משיכה של קובץ קונפיג מאס3
 
 def load_image(s3_client,BUCKET_NAME,image_path):
+    """
+    Downloads an image from S3 to a temporary local file.
 
+    Args:
+        s3_client: Boto3 S3 client
+        BUCKET_NAME: Name of S3 bucket
+        image_path: Path to image in S3
+
+    Returns:
+        str: Path to temporary local image file
+    """
     with NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
             temp_image_path = temp_file.name
             
@@ -38,9 +46,22 @@ def delete_temp_image(temp_image_path):
 
 def create_polygons(mask, simplification_tolerance = 1.0,min_polygon_points = 3,
                     min_contour_points = 3,join_mitre_leange = 1,contours_level = 0.5,min_area = 20.0):
-    # logger.info('Create polygons in processing...')
+    """
+    Converts a binary mask to simplified polygons representing tree areas.
+    Processes contours, filters small areas, and simplifies polygon geometry.
 
+    Args:
+        mask: Binary numpy array representing tree detection mask
+        simplification_tolerance: Tolerance for polygon simplification
+        min_polygon_points: Minimum points required for a valid polygon
+        min_contour_points: Minimum points required for a valid contour
+        join_mitre_leange: Buffer distance for joining nearby polygons
+        contours_level: Threshold level for contour detection
+        min_area: Minimum area required to keep a polygon
 
+    Returns:
+        list: List of simplified Shapely polygons
+    """
     contours = find_contours(mask, level=contours_level)
     polygons = []
     for contour in contours:
@@ -69,9 +90,7 @@ def create_polygons(mask, simplification_tolerance = 1.0,min_polygon_points = 3,
         if not polygon.is_empty and polygon.is_valid:
             final_polygons.append(polygon)
 
-    # logger.info('Create polygons has done.')
     return final_polygons
-    # final_polygons now contains all the combined and simplified polygons, ensuring none are missing
 
 def load_model(MODEL_PATH):
     clf = pickle.load(open(MODEL_PATH, 'rb'))
@@ -82,7 +101,20 @@ def process_image(png_name, transform,temp_image_path, offsets,model,
                   simplification_tolerance=simplification_tolerance,
                   min_polygon_points=min_polygon_points,min_contour_points=min_contour_points,
                   join_mitre_leange=join_mitre_leange,contours_level=contours_level,min_area=min_area):
-    # logger.info(f"Predicting model: {png_name}")
+    """
+    Processes a single image through the tree detection model and converts results to georeferenced polygons.
+
+    Args:
+        png_name: Name of the image file
+        transform: Affine transformation for georeferencing
+        temp_image_path: Path to local image file
+        offsets: Dictionary of image offsets
+        model: Loaded tree detection model
+        **kwargs: Additional parameters for polygon creation
+
+    Returns:
+        list: List of georeferenced Shapely polygons representing detected trees
+    """
     offset = offsets[png_name]
 
     

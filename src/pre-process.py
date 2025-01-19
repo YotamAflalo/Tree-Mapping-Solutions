@@ -24,6 +24,17 @@ from s3_upload import upload_to_s3
 from config.config_aws import BUCKET_NAME, AWS_REGION
 from cloudwatch import logs_client,log_to_cloudwatch
 def tif_to_png(tif_path, png_path,image_name):
+    """
+    Converts a TIF image to PNG format.
+    
+    Args:
+        tif_path: str, path to source TIF file
+        png_path: str, destination directory for PNG
+        image_name: str, name for output PNG file
+        
+    Returns:
+        bool: True if conversion successful, False otherwise
+    """
     logger.info('Convert tif to png in processing...')
     log_to_cloudwatch(logs_client=logs_client,message="Convert tif to png in processing")
     try:
@@ -45,6 +56,18 @@ def tif_to_png(tif_path, png_path,image_name):
 
 
 def split_image(image_path, out_folder, size: int, skip_empty: bool = False):
+    """
+    Splits an image into smaller squares and saves them individually.
+    
+    Args:
+        image_path: str, path to source image
+        out_folder: str, output directory for split images
+        size: int, size of split squares in pixels
+        skip_empty: bool, whether to skip empty image sections
+        
+    Returns:
+        dict: Mapping of split image filenames to their offset coordinates
+    """
     logger.info('Split images in processing...')
 
     if not Path(out_folder).exists():

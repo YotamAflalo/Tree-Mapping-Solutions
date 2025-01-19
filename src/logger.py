@@ -3,8 +3,11 @@ from pathlib import Path
 from datetime import datetime
 
 class Logger:
-    """Simple logger."""
-    
+    """
+    Singleton logger class that handles both file logging and CloudWatch logging.
+    Creates a new log file daily in the logs directory.
+    """
+
     def __init__(self):
         # Create logs directory if it doesn't exist
         log_dir = Path("logs")
@@ -27,13 +30,13 @@ class Logger:
     def getLogger(self):
         return self.logger
     def debug(self, message: str) -> None:
-         """Log debug message."""
+         """Log debug level message."""
          self.logger.debug(message)
     def info(self, message: str) -> None:
-         """Log debug message."""
+         """Log info level message."""
          self.logger.info(message)
     def eror(self, message: str) -> None:
-         """Log debug message."""
+         """Log error level message."""
          self.logger.error(message)
 
 # Create a singleton instance

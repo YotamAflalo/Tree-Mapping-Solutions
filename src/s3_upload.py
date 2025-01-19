@@ -24,7 +24,16 @@ class S3Uploader:
         self.bucket_name = bucket_name
 
     def upload_file(self, file_path, s3_path):
-        """Upload a single file to S3."""
+        """
+        Uploads a single file to S3 bucket.
+        
+        Args:
+            file_path: str, local path of file to upload
+            s3_path: str, destination path in S3
+            
+        Returns:
+            bool: True if upload successful, False otherwise
+        """
         try:
             self.s3_client.upload_file(file_path, self.bucket_name, s3_path)
             logger.info(f"Successfully uploaded {file_path} to s3://{self.bucket_name}/{s3_path}")
@@ -34,7 +43,15 @@ class S3Uploader:
             return False
 
     def upload_images(self, images_folder):
-        """Upload all images from the split images folder."""
+        """
+        Uploads all PNG images from a folder to S3, organizing by date.
+        
+        Args:
+            images_folder: str, local folder containing images
+            
+        Returns:
+            bool: True if all uploads successful, False otherwise
+        """
         logger.info(f"Starting upload of images from {images_folder}")
         
         if not os.path.exists(images_folder):
@@ -56,7 +73,15 @@ class S3Uploader:
         return success
 
     def upload_offsets(self, offsets_folder):
-        """Upload the latest offsets JSON file."""
+        """
+        Uploads the latest JSON file containing image offsets to S3.
+        
+        Args:
+            offsets_folder: str, folder containing offset JSON files
+            
+        Returns:
+            bool: True if upload successful, False otherwise
+        """
         logger.info(f"Starting upload of offsets from {offsets_folder}")
         
         if not os.path.exists(offsets_folder):
