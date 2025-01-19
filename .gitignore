@@ -40,6 +40,7 @@ data/output/*
 data/processed_images/*
 data/validation_input/*
 data/small_offsets/*
+data/lambda-reports/*
 
 # Logs
 src/logs/*

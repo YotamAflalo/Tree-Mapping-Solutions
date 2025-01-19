@@ -5,6 +5,7 @@ import os
 from affine import Affine
 
 from src.model_functions import process_image,load_model,load_image,delete_temp_image
+from src.lambada_custom_logger import log_to_cloudwatch,logs_client
 from src.config_model import MODEL_PATH,OUTPUT_FOLDER_S3
 print("load packges to lambada_functions")
 
@@ -35,10 +36,8 @@ def lambda_handler(event, context):
     json_data = response['Body'].read()
     offsets_dict = json.loads(json_data)
 
-    print(offsets_dict)
-    print(f"Processing new file: {json_key} from bucket: {bucket}")
     logger.info(f"Processing new file: {json_key} from bucket: {bucket}")
-
+    log_to_cloudwatch(logs_client=logs_client,message=f"Processing new file: {json_key} from bucket: {bucket}")
 
     transform = Affine(1.0, 0.0, 0.0,
        0.0, 1.0, 0.0)
@@ -52,14 +51,17 @@ def lambda_handler(event, context):
         offsets = png_dict
 
         for png_image in offsets.keys():
-            print(f"start procceding {png_image}")
+            log_to_cloudwatch(logs_client=logs_client,message=f"start procceding {png_image}")
             if '.png' in png_image: 
                 image_path = os.path.join(folder, png_image)
                 print(f"loading {png_image}")
+                log_to_cloudwatch(logs_client=logs_client,message=f"loading {png_image}")
                 temp_image= load_image(s3_client=s3,BUCKET_NAME=bucket,image_path=image_path) # i chackted this part in lambada and it is working :) 
                 print(f" {png_image} loaded")
+                log_to_cloudwatch(logs_client=logs_client,message=f"{png_image} loaded")
                 polygons = process_image(png_image, temp_image_path=temp_image, transform=transform, offsets=offsets,model=model) #TODO chack on lambada
-                print(f"we activate the model on {png_image}")
+                print(f" activate the model on {png_image}")
+                log_to_cloudwatch(logs_client=logs_client,message=f"activate the model on {png_image}")
                 polygons_info.extend(polygons)
                 delete_temp_image(temp_image)
 
@@ -89,7 +91,7 @@ def lambda_handler(event, context):
                     # Upload file to S3
                     with open(os.path.join(tmpdir, file), 'rb') as f:
                         s3.upload_fileobj(f, bucket, s3_key)
-                        print(f"Uploaded {s3_key} to S3")
+                        log_to_cloudwatch(logs_client=logs_client,message=f"Uploaded {s3_key} to S3")
                         logger.info(f"Uploaded {s3_key} to S3")
                 # Explicitly delete temporary files
             for file_path in temp_files:
@@ -98,6 +100,7 @@ def lambda_handler(event, context):
                     logger.info(f"Deleted temporary file: {file_path}")
                 except OSError as e:
                     logger.warning(f"Error deleting {file_path}: {e}")
+                    log_to_cloudwatch(logs_client=logs_client,message=f"Error deleting {file_path}: {e}")
 
 
     return {

@@ -65,6 +65,7 @@ def split_image(image_path, out_folder, size: int, skip_empty: bool = False):
                 crop.save(os.path.join(out_folder, crop_filename))
                 offsets[crop_filename] = (i, j)  # Track the offset
     logger.info(f'{image_path} splited images have been saved to {out_folder}')
+    log_to_cloudwatch(logs_client=logs_client,message=f'{image_path} splited images have been saved to {out_folder}')
     return offsets  # Return the offsets for further use
 
 if __name__ == "__main__":
@@ -88,7 +89,7 @@ if __name__ == "__main__":
                         os.remove(file_path)
                     except Exception as e:
                         logger.error(f"got this exaption: {str(e)}")
-
+                        log_to_cloudwatch(logs_client=logs_client,message=f"got this exaption: {str(e)}")
                 # Generate the file name with the current date
                 current_date = datetime.now().strftime("%Y-%m-%d")  # Format: YYYY-MM-DD
                 json_name = f"{current_date}.json"
@@ -97,12 +98,15 @@ if __name__ == "__main__":
                     json.dump(offsets_dict, json_file, indent=4)  # `indent` makes the JSON more readable
                 try:
                     upload_to_s3(SPLIT_FOLDER, OFSETS_FOLDER,BUCKET_NAME, AWS_REGION)
+                    log_to_cloudwatch(logs_client=logs_client,message=f"upload to s3 sucssesfully")
                 except Exception as e:
                         logger.error(f"faild to upload to s3: {str(e)}")   
+                        log_to_cloudwatch(logs_client=logs_client,message=f"faild to upload to s3: {str(e)}")
             now = datetime.now()
             tomorrow = datetime.now() + timedelta(days=1)
             next_run = tomorrow.replace(hour=RUN_H, minute=0, second=0, microsecond=0)
             sleep_seconds = (next_run - now).total_seconds()
+            log_to_cloudwatch(logs_client=logs_client,message=f"going to sleep {sleep_seconds}")
             logger.info(f"going to sleep {sleep_seconds}")
             time.sleep(sleep_seconds)
 

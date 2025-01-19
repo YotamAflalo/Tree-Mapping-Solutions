@@ -22,6 +22,8 @@ COPY requirements_pre.txt .
 COPY src/pre-process.py src/
 COPY src/s3_upload.py src/
 COPY src/logger.py src/
+COPY src/cloudwatch.py src/
+
 COPY config/config_pre_process.py config/
 COPY config/config_aws.py config/
 COPY config/__init__.py config/
