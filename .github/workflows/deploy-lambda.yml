@@ -34,6 +34,7 @@ jobs:
       - name: Notify via SNS
         run: |
           aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-activator Lambda: success"
+
   final-logexporter:
     runs-on: ubuntu-latest
     steps:
@@ -67,8 +68,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: "us-east-1"  # Explicitly specify the region here
 
       - name: Build Docker image
         run: |
@@ -81,13 +91,6 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           docker push 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "us-east-1"
 
       - name: Deploy Lambda using container image
         run: |
