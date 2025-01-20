@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     # Specific log groups to monitor
     LOG_GROUPS = [
         '/aws/lambda/yotam-finel-model',
-        '/aws/lambda/yotam-finel-activator'
+        '/aws/lambda/final-activator'
     ]
     
     # Collect reports from specified log groups
@@ -65,7 +65,7 @@ def lambda_handler(event, context):
     
     # Sort reports by function for counting
     model_reports = [r for r in all_reports if r['function_name'] == 'yotam-finel-model']
-    activator_reports = [r for r in all_reports if r['function_name'] == 'yotam-finel-activator']
+    activator_reports = [r for r in all_reports if r['function_name'] == 'final-activator']
     
     return {
         'statusCode': 200,
@@ -75,11 +75,11 @@ def lambda_handler(event, context):
             'export_success': export_success,
             'reports_by_function': {
                 'yotam-finel-model': len(model_reports),
-                'yotam-finel-activator': len(activator_reports)
+                'final-activator': len(activator_reports)
             },
             'details': {
                 'yotam-finel-model': [{'request_id': r['request_id'], 'duration': r['duration']} for r in model_reports],
-                'yotam-finel-activator': [{'request_id': r['request_id'], 'duration': r['duration']} for r in activator_reports]
+                'final-activator': [{'request_id': r['request_id'], 'duration': r['duration']} for r in activator_reports]
             }
         })
     }
