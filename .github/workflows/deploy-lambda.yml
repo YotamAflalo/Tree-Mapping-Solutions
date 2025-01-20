@@ -86,15 +86,15 @@ jobs:
 
       - name: Tag Docker image
         run: |
-          docker tag model-image:latest 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+          docker tag model-image:latest 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-tree-image:latest
 
       - name: Push Docker image to ECR
         run: |
-          docker push 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+          docker push 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-tree-image:latest
 
       - name: Deploy Lambda using container image
         run: |
-          aws lambda update-function-code --function-name model-image-lambda --image-uri 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+          aws lambda update-function-code --function-name model-image-lambda --image-uri 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-tree-image:latest
 
       - name: Notify via SNS
         run: |
