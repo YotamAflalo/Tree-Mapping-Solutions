@@ -98,4 +98,4 @@ jobs:
 
       - name: Notify via SNS
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: success"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of model-image Lambda: success"
