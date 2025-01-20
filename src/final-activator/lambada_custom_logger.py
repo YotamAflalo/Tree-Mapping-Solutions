@@ -10,7 +10,6 @@ aws_secret_access_key = os.environ['aws_secret_access_key']
 
 logs_client = boto3.client('logs', region_name=AWS_REGION,
                                       aws_access_key_id=aws_access_key_id,aws_secret_access_key=aws_secret_access_key)
-
 try:
     logs_client.create_log_group(logGroupName=log_group_name)
 except logs_client.exceptions.ResourceAlreadyExistsException:
