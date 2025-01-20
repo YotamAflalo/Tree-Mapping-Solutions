@@ -59,7 +59,7 @@ jobs:
       - name: Notify via SNS
         if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas:3cf58d1a-070a-4074-a24c-e8c17d5a7e07 --message "Deployment status of final-logexporter Lambda: ${{ job.status }}"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-logexporter Lambda: ${{ job.status }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
