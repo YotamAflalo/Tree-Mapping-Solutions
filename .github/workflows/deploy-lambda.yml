@@ -1,0 +1,104 @@
+name: Deploy Lambda Functions and Docker Image
+
+on:
+  push:
+    paths:
+      - "src/**"
+    branches: [ main ]
+
+jobs:
+  final-activator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Create Zip file
+        run: cd src/final-activator && zip -r code.zip .
+
+      - name: AWS CLI upload
+        uses: imehedi/actions-awscli-v2@latest
+        with:
+          args: "lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-activator --zip-file fileb://src/final-activator/code.zip"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+
+      - name: Notify via SNS
+        if: always()
+        run: |
+          aws sns publish --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:204597968057:DeploymentNotifications --message "Deployment status of final-activator Lambda: ${{ job.status }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+
+  final-logexporter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Create Zip file
+        run: cd src/final-logexporter && zip -r code.zip .
+
+      - name: AWS CLI upload
+        uses: imehedi/actions-awscli-v2@latest
+        with:
+          args: "lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-logexporter --zip-file fileb://src/final-logexporter/code.zip"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+
+      - name: Notify via SNS
+        if: always()
+        run: |
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas:3cf58d1a-070a-4074-a24c-e8c17d5a7e07 --message "Deployment status of final-logexporter Lambda: ${{ job.status }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+
+  model-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build --platform linux/amd64 -t model-image src/yotam-model_image
+
+      - name: Tag Docker image
+        run: |
+          docker tag model-image:latest 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+
+      - name: Deploy Lambda using container image
+        run: |
+          aws lambda update-function-code --function-name model-image-lambda --image-uri 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+
+      - name: Notify via SNS
+        if: always()
+        run: |
+          aws sns publish --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: ${{ job.status }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
