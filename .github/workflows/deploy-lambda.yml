@@ -20,24 +20,20 @@ jobs:
           cd src/final-activator
           zip -r code.zip .
 
-      - name: AWS CLI upload
-        uses: imehedi/actions-awscli-v2@latest
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          args: "lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-activator --zip-file fileb://src/final-activator/code.zip"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: AWS CLI upload
+        run: |
+          aws lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-activator --zip-file fileb://src/final-activator/code.zip
 
       - name: Notify via SNS
-        if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-activator Lambda: ${{ job.status }}"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
-
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-activator Lambda: success"
   final-logexporter:
     runs-on: ubuntu-latest
     steps:
@@ -51,23 +47,20 @@ jobs:
           cd src/final-logexporter
           zip -r code.zip .
 
-      - name: AWS CLI upload
-        uses: imehedi/actions-awscli-v2@latest
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          args: "lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-logexporter --zip-file fileb://src/final-logexporter/code.zip"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: AWS CLI upload
+        run: |
+          aws lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-logexporter --zip-file fileb://src/final-logexporter/code.zip
 
       - name: Notify via SNS
-        if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-logexporter Lambda: ${{ job.status }}"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-logexporter Lambda: success"
 
   model-image:
     runs-on: ubuntu-latest
@@ -75,7 +68,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Log in to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build Docker image
@@ -90,19 +82,17 @@ jobs:
         run: |
           docker push 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
       - name: Deploy Lambda using container image
         run: |
           aws lambda update-function-code --function-name model-image-lambda --image-uri 204597968057.dkr.ecr.us-east-1.amazonaws.com/yotam-model_image:latest
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
 
       - name: Notify via SNS
-        if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: ${{ job.status }}"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: success"
