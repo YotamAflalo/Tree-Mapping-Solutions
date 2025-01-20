@@ -13,10 +13,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install zip
-        uses: montudor/action-zip@v1
+        run: sudo apt-get install -y zip
 
       - name: Create Zip file
-        run: cd src/final-activator && zip -r code.zip .
+        run: |
+          cd src/final-activator
+          zip -r code.zip .
 
       - name: AWS CLI upload
         uses: imehedi/actions-awscli-v2@latest
@@ -30,7 +32,7 @@ jobs:
       - name: Notify via SNS
         if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:204597968057:DeploymentNotifications --message "Deployment status of final-activator Lambda: ${{ job.status }}"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-activator Lambda: ${{ job.status }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -42,10 +44,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install zip
-        uses: montudor/action-zip@v1
+        run: sudo apt-get install -y zip
 
       - name: Create Zip file
-        run: cd src/final-logexporter && zip -r code.zip .
+        run: |
+          cd src/final-logexporter
+          zip -r code.zip .
 
       - name: AWS CLI upload
         uses: imehedi/actions-awscli-v2@latest
@@ -76,7 +80,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --platform linux/amd64 -t model-image src/yotam-model_image
+          docker build --platform linux/amd64 -t model-image src/model_image
 
       - name: Tag Docker image
         run: |
@@ -97,7 +101,7 @@ jobs:
       - name: Notify via SNS
         if: always()
         run: |
-          aws sns publish --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: ${{ job.status }}"
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:DeploymentNotifications --message "Deployment status of model-image Lambda: ${{ job.status }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
