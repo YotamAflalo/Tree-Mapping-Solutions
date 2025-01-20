@@ -13,6 +13,7 @@ def lambda_handler(event, context):
     # TODO implement
     
     
+    
     bucket = event['Records'][0]['s3']['bucket']['name']
     json_key = event['Records'][0]['s3']['object']['key']
     print(json_key)
