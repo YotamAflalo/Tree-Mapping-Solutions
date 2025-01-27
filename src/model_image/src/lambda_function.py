@@ -7,6 +7,8 @@ from affine import Affine
 from src.model_functions import process_image,load_model,load_image,delete_temp_image
 from src.lambada_custom_logger import log_to_cloudwatch,logs_client
 from src.config_model import MODEL_PATH,OUTPUT_FOLDER_S3
+from src.config_sns import TOPIC_ARN,subject_failure,subject_success
+
 print("load packges to lambada_functions")
 
 # Set up logging
@@ -42,7 +44,8 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                       aws_secret_access_key=aws_secret_access_key)
 
-
+    sns = boto3.client('sns',aws_access_key_id=aws_access_key_id,
+                      aws_secret_access_key=aws_secret_access_key)
     response = s3.get_object(Bucket=bucket, Key=json_key)
     json_data = response['Body'].read()
     offsets_dict = json.loads(json_data)
@@ -55,7 +58,8 @@ def lambda_handler(event, context):
     model = load_model(MODEL_PATH)
     # crs = None
     folder = f"images/{json_key[json_key.find('/')+1:][:json_key[json_key.find('/')+1:].find('/')]}"
-
+    uploded = ['']
+    not_uploded = ['']
     for tif_file, png_dict in offsets_dict.items(): #now there is only one tif per offset, but in the futer maybe more
         polygons_info = []
         IMAGE_NAME = tif_file
@@ -67,14 +71,17 @@ def lambda_handler(event, context):
                 image_path = os.path.join(folder, png_image)
                 print(f"loading {png_image}")
                 log_to_cloudwatch(logs_client=logs_client,message=f"loading {png_image}")
-                temp_image= load_image(s3_client=s3,BUCKET_NAME=bucket,image_path=image_path) # i chackted this part in lambada and it is working :) 
-                print(f" {png_image} loaded")
-                log_to_cloudwatch(logs_client=logs_client,message=f"{png_image} loaded")
-                polygons = process_image(png_image, temp_image_path=temp_image, transform=transform, offsets=offsets,model=model) #TODO chack on lambada
-                print(f" activate the model on {png_image}")
-                log_to_cloudwatch(logs_client=logs_client,message=f"activate the model on {png_image}")
-                polygons_info.extend(polygons)
-                delete_temp_image(temp_image)
+                try:
+                    temp_image= load_image(s3_client=s3,BUCKET_NAME=bucket,image_path=image_path) # i chackted this part in lambada and it is working :) 
+                    print(f" {png_image} loaded")
+                    log_to_cloudwatch(logs_client=logs_client,message=f"{png_image} loaded")
+                    polygons = process_image(png_image, temp_image_path=temp_image, transform=transform, offsets=offsets,model=model) #TODO chack on lambada
+                    print(f" activate the model on {png_image}")
+                    log_to_cloudwatch(logs_client=logs_client,message=f"activate the model on {png_image}")
+                    polygons_info.extend(polygons)
+                    delete_temp_image(temp_image)
+                except:
+                    not_uploded.append(png_image)
 
         gdf = gpd.GeoDataFrame({'geometry': polygons_info})
 
@@ -104,6 +111,7 @@ def lambda_handler(event, context):
                         s3.upload_fileobj(f, bucket, s3_key)
                         log_to_cloudwatch(logs_client=logs_client,message=f"Uploaded {s3_key} to S3")
                         logger.info(f"Uploaded {s3_key} to S3")
+                        uploded.append(s3_key)
                 # Explicitly delete temporary files
             for file_path in temp_files:
                 try:
@@ -112,7 +120,16 @@ def lambda_handler(event, context):
                 except OSError as e:
                     logger.warning(f"Error deleting {file_path}: {e}")
                     log_to_cloudwatch(logs_client=logs_client,message=f"Error deleting {file_path}: {e}")
-
+    email_body = f"""the following file uploded to s3: {' \n '.join(uploded)},
+                     the following image not processed: {' \n '.join(not_uploded)} """
+    message = {
+    "default": "Default message",
+    "email": email_body}
+    sns.publish(
+        TopicArn=TOPIC_ARN ,
+        Message=json.dumps(message),
+        Subject=subject_success if len(not_uploded)==1 else  subject_failure,
+         MessageStructure='json')
 
     return {
         'statusCode': 200,
