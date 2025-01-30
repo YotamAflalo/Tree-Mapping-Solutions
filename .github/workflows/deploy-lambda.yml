@@ -12,15 +12,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest boto3
+          pip install -r requirements.txt
+        working-directory: ./src/final_activator
+
+      - name: Run tests
+        env:
+          TEST_MODE: 'true'
+          aws_access_key_id: 'test_key'
+          aws_secret_access_key: 'test_secret'
+        run: |
+          pytest tests/test_lambda_function_activator.py -v
+        continue-on-error: false
+
       - name: Install zip
+        if: success()  # Only proceed if tests passed
         run: sudo apt-get install -y zip
 
       - name: Create Zip file
+        if: success()  # Only proceed if tests passed
         run: |
           cd src/final_activator
           zip -r code.zip .
 
       - name: Configure AWS Credentials
+        if: success()  # Only proceed if tests passed
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -28,15 +52,23 @@ jobs:
           aws-region: "us-east-1"
 
       - name: AWS CLI upload
+        if: success()  # Only proceed if tests passed
         run: |
           aws lambda update-function-code --function-name arn:aws:lambda:us-east-1:204597968057:function:yotam-finel-activator --zip-file fileb://src/final_activator/code.zip
 
       - name: Notify via SNS
+        if: always()  # Run this step regardless of previous step outcomes
         run: |
-          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "Deployment status of final-activator Lambda: success"
+          if [ ${{ job.status }} == 'success' ]; then
+            message="Deployment status of final-activator Lambda: success"
+          else
+            message="Deployment status of final-activator Lambda: failed (tests or deployment failed)"
+          fi
+          aws sns publish --topic-arn arn:aws:sns:us-east-1:204597968057:roeyandyotam-lambdas --message "$message"
 
   final-logexporter:
     runs-on: ubuntu-latest
+    needs: []  # Explicitly specify no dependencies
     steps:
       - uses: actions/checkout@v4
 
@@ -65,6 +97,7 @@ jobs:
 
   model-image:
     runs-on: ubuntu-latest
+    needs: []  # Explicitly specify no dependencies
     steps:
       - uses: actions/checkout@v4
 
