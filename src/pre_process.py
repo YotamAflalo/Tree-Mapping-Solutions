@@ -15,14 +15,16 @@ import time
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from logger import logger  # Note: changed this to be explicit
+from src.logger import Logger  
 from config.config_pre_process import DEBUG,INPUT_FOLDER_PATH,IMAGE_SIZE,SPLIT_FOLDER,OFSETS_FOLDER,INPUT_PROCESSED_FOLDER_PATH,TIME_ZONE,RUN_H
 # Add the 'src' directory to the Python path
 import shutil
 
-from s3_upload import upload_to_s3
+from src.s3_upload import upload_to_s3
 from config.config_aws import BUCKET_NAME, AWS_REGION
-from cloudwatch import logs_client,log_to_cloudwatch
+from src.cloudwatch import logs_client,log_to_cloudwatch
+
+logger = Logger(logger_name='pre-process',logs_dir=os.path.join(project_root,'logs'),log_mode='DEBUG')
 def tif_to_png(tif_path, png_path,image_name):
     """
     Converts a TIF image to PNG format.

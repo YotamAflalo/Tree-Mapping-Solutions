@@ -13,7 +13,6 @@ def lambda_handler(event, context):
     # TODO implement
     bucket = event['Records'][0]['s3']['bucket']['name']
     json_key = event['Records'][0]['s3']['object']['key']
-    print(json_key)
     s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                       aws_secret_access_key=aws_secret_access_key)
 
@@ -22,7 +21,6 @@ def lambda_handler(event, context):
     json_data = response['Body'].read()
     offsets_dict = json.loads(json_data)
 
-    print(offsets_dict)
     logger.info(f"Processing new file: {json_key} from bucket: {bucket}")
     log_to_cloudwatch(logs_client=logs_client,message=f"Processing new file: {json_key} from bucket: {bucket}")
     #In the future, additional aggregation should be examined according to calculation power and lambda costs

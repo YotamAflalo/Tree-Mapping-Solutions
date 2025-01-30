@@ -13,9 +13,11 @@ dotenv.load_dotenv()
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from logger import logger
+from src.logger import Logger
 from config.config_pre_process import SPLIT_FOLDER, OFSETS_FOLDER
 from config.config_aws import BUCKET_NAME, AWS_REGION
+logger = Logger(logger_name='pre-process',logs_dir=os.path.join(project_root,'logs'),log_mode='DEBUG')
+
 class S3Uploader:
     def __init__(self, bucket_name, aws_region='us-east-1'):
         """Initialize S3 client and bucket configuration."""

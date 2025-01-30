@@ -8,7 +8,6 @@ import os
 project_root = str(Path(__file__).parent.parent)
 sys.path.insert(0, project_root)
 
-from logger import logger
 from config.config_aws import  AWS_REGION, log_group_name
 import dotenv
 dotenv.load_dotenv()
