@@ -16,8 +16,8 @@ import pytest
 import json
 from unittest.mock import MagicMock, patch
 
-from src.finel_activator.lambda_function import lambda_handler
-from src.finel_activator.lambada_custom_logger import log_to_cloudwatch
+from src.final_activator.lambda_function import lambda_handler
+from src.final_activator.lambada_custom_logger import log_to_cloudwatch
 
 @pytest.fixture
 def sample_s3_event():
