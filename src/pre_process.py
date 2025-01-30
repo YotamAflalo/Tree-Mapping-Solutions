@@ -17,7 +17,7 @@ sys.path.insert(0, project_root)
 
 from src.logger import Logger  
 from config.config_pre_process import DEBUG,INPUT_FOLDER_PATH,IMAGE_SIZE,SPLIT_FOLDER,OFSETS_FOLDER,INPUT_PROCESSED_FOLDER_PATH,TIME_ZONE,RUN_H
-# Add the 'src' directory to the Python path
+
 import shutil
 
 from src.s3_upload import upload_to_s3
@@ -94,7 +94,7 @@ def split_image(image_path, out_folder, size: int, skip_empty: bool = False):
     return offsets  # Return the offsets for further use
 
 if __name__ == "__main__":
-    while True:
+    while True: #runs every day.
         israel_tz = pytz.timezone(TIME_ZONE)
         israel_time = datetime.now(israel_tz)
         if israel_time.hour == RUN_H or DEBUG:# and israel_time.minute == 00:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
                         log_to_cloudwatch(logs_client=logs_client,message=f"faild to upload to s3: {str(e)}")
             now = datetime.now()
             tomorrow = datetime.now() + timedelta(days=1)
-            next_run = tomorrow.replace(hour=RUN_H, minute=0, second=0, microsecond=0)
+            next_run = tomorrow.replace(hour=RUN_H, minute=0, second=0, microsecond=0) #TODO - take this to the config.
             sleep_seconds = (next_run - now).total_seconds()
             log_to_cloudwatch(logs_client=logs_client,message=f"going to sleep {sleep_seconds}")
             logger.info(f"going to sleep {sleep_seconds}")

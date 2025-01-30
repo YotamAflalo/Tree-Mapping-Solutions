@@ -1,10 +1,9 @@
 import logging
-from pathlib import Path
 from datetime import datetime
 import os
 class Logger(logging.Logger):
     """
-    Singleton logger class that handles both file logging and CloudWatch logging.
+    Singleton logger class that handles file logging.
     Creates a new log file daily in the logs directory.
     """
 
@@ -28,6 +27,3 @@ class Logger(logging.Logger):
         # Add handler to logger
         self.addHandler(file_handler)
 
-
-# Create a singleton instance
-# logger = Logger()#.getLogger()
