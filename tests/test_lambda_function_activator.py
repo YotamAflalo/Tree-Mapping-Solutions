@@ -10,7 +10,7 @@ os.environ['aws_secret_access_key'] = 'test_secret'
 # Set up path
 project_root = str(Path(__file__).parent.parent)
 sys.path.append(project_root)
-sys.path.append(os.path.join(project_root, 'src', 'finel_activator'))
+sys.path.append(os.path.join(project_root, 'src', 'final_activator'))
 
 import pytest
 import json
