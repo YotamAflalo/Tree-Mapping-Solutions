@@ -84,7 +84,51 @@ AWS_REGION=your_region
 - Lambda functions
 - ECR repository for Docker images
 
-## Docker Image Deployment
+## Docker Setup for Pre-processing
+
+The pre-processing module runs inside a Docker container. This container processes input images, converts them, splits them into smaller chunks, and uploads the processed images to S3.
+
+### **Building the Docker Image**
+
+To build the Docker image, navigate to the project root (where the `Dockerfile` is located) and run:
+
+```bash
+docker build -t finel_preprocess .
+```
+
+### **Running the Docker Container**
+
+To run the pre-processing container, use the following command. Make sure to replace the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` with your actual AWS credentials.
+
+#### **Windows (PowerShell or CMD)**
+```bash
+docker run --rm \
+  -e AWS_ACCESS_KEY_ID="your_access_key" \
+  -e AWS_SECRET_ACCESS_KEY="your_secret_key" \
+  -v "your_location:/app/data/input" \
+  finel_preprocess
+```
+
+#### **Linux/Mac**
+```bash
+docker run --rm \
+  -e AWS_ACCESS_KEY_ID="your_access_key" \
+  -e AWS_SECRET_ACCESS_KEY="your_secret_key" \
+  -v "your_location:/app/data/input" \
+  finel_preprocess
+```
+replace 'your_location' with the input location.
+
+### **Explanation of the Command**
+- `--rm` → Automatically removes the container once it stops.
+- `-e AWS_ACCESS_KEY_ID=...` and `-e AWS_SECRET_ACCESS_KEY=...` → Pass AWS credentials as environment variables.
+- `-v <local_path>:<container_path>` → Mounts the local input directory to the container.
+- `finel_preprocess` → Name of the built Docker image.
+
+This setup ensures that the container processes images from the specified local input folder without creating an empty one inside the container.
+
+
+## Docker Setup for for model-image deployment
 
 Follow these steps to build and deploy the model Docker image:
 
