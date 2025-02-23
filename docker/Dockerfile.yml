@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Copy only the necessary files
 COPY requirements_pre.txt .
-COPY src/pre-process.py src/
+COPY src/pre_process.py src/
 COPY src/s3_upload.py src/
 COPY src/logger.py src/
 COPY src/cloudwatch.py src/
@@ -28,9 +28,8 @@ COPY config/config_pre_process.py config/
 COPY config/config_aws.py config/
 COPY config/__init__.py config/
 
-# Create necessary directories
-RUN mkdir -p data/input \
-    data/ofsets \
+# Create necessary directories (except input, since it will be mounted)
+RUN mkdir -p data/ofsets \
     data/processed_images/input_preprocessed \
     data/processed_images/splited_images \
     src/logs
@@ -38,15 +37,13 @@ RUN mkdir -p data/input \
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements_pre.txt
 
-# Create volumes for:
-# 1. Input data that needs to be processed
-# 2. Processed images storage
-# 3. Logs storage
-VOLUME ["/app/data/input", "/app/data/processed_images", "/app/src/logs"]
+# Remove the VOLUME directive for input
+# Keep only relevant volumes
+VOLUME ["/app/data/processed_images", "/app/src/logs"]
 
 # Set environment variables for AWS credentials (to be provided at runtime)
 ENV AWS_ACCESS_KEY_ID=""
 ENV AWS_SECRET_ACCESS_KEY=""
 
 # Command to run the script
-CMD ["python", "src/pre-process.py"]
+CMD ["python", "src/pre_process.py"]
